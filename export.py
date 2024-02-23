@@ -34,6 +34,7 @@ if __name__ == '__main__':
     parser.add_argument('--include-nms', action='store_true', help='export end2end onnx')
     parser.add_argument('--fp16', action='store_true', help='CoreML FP16 half-precision export')
     parser.add_argument('--int8', action='store_true', help='CoreML INT8 quantization')
+    parser.add_argument('--gray', action='store_true', help='gray scaled image option')
     opt = parser.parse_args()
     opt.img_size *= 2 if len(opt.img_size) == 1 else 1  # expand
     opt.dynamic = opt.dynamic and not opt.end2end
@@ -52,7 +53,7 @@ if __name__ == '__main__':
     opt.img_size = [check_img_size(x, gs) for x in opt.img_size]  # verify img_size are gs-multiples
 
     # Input
-    img = torch.zeros(opt.batch_size, 3, *opt.img_size).to(device)  # image size(1,3,320,192) iDetection
+    img = torch.zeros(opt.batch_size, 1 if opt.gray else 3, *opt.img_size).to(device)  # image size(1,3,320,192) iDetection
 
     # Update model
     for k, m in model.named_modules():

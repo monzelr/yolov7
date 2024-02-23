@@ -183,13 +183,17 @@ class LoadImages:  # for inference
         else:
             # Read image
             self.count += 1
-            img0 = cv2.imread(path)  # BGR
+            img0 = cv2.imread(path, cv2.IMREAD_UNCHANGED)  # BGR or gray
+            if img0.ndim == 2:
+                img0 = img0[..., np.newaxis]
             assert img0 is not None, 'Image Not Found ' + path
             #print(f'image {self.count}/{self.nf} {path}: ', end='')
 
         # Padded resize
         img = letterbox(img0, self.img_size, stride=self.stride)[0]
 
+        if img.ndim == 2:
+            img = img[..., np.newaxis]
         # Convert
         img = img[:, :, ::-1].transpose(2, 0, 1)  # BGR to RGB, to 3x416x416
         img = np.ascontiguousarray(img)
@@ -623,6 +627,8 @@ class LoadImagesAndLabels(Dataset):  # for training/testing
             labels_out[:, 1:] = torch.from_numpy(labels)
 
         # Convert
+        if img.ndim == 2:
+            img = img[..., np.newaxis]
         img = img[:, :, ::-1].transpose(2, 0, 1)  # BGR to RGB, to 3x416x416
         img = np.ascontiguousarray(img)
 
@@ -668,13 +674,15 @@ def load_image(self, index):
     img = self.imgs[index]
     if img is None:  # not cached
         path = self.img_files[index]
-        img = cv2.imread(path)  # BGR
+        img = cv2.imread(path, cv2.IMREAD_UNCHANGED)  # BGR
         assert img is not None, 'Image Not Found ' + path
         h0, w0 = img.shape[:2]  # orig hw
         r = self.img_size / max(h0, w0)  # resize image to img_size
         if r != 1:  # always resize down, only resize up if training with augmentation
             interp = cv2.INTER_AREA if r < 1 and not self.augment else cv2.INTER_LINEAR
             img = cv2.resize(img, (int(w0 * r), int(h0 * r)), interpolation=interp)
+        if img.ndim == 2:
+            img = img[..., np.newaxis]
         return img, (h0, w0), img.shape[:2]  # img, hw_original, hw_resized
     else:
         return self.imgs[index], self.img_hw0[index], self.img_hw[index]  # img, hw_original, hw_resized
@@ -682,7 +690,7 @@ def load_image(self, index):
 
 def augment_hsv(img, hgain=0.5, sgain=0.5, vgain=0.5):
     r = np.random.uniform(-1, 1, 3) * [hgain, sgain, vgain] + 1  # random gains
-    hue, sat, val = cv2.split(cv2.cvtColor(img, cv2.COLOR_BGR2HSV))
+    hue, sat, val = cv2.split(cv2.cvtColor(cv2.cvtColor(img, cv2.COLOR_GRAY2BGR), cv2.COLOR_BGR2HSV))
     dtype = img.dtype  # uint8
 
     x = np.arange(0, 256, dtype=np.int16)
@@ -1265,7 +1273,11 @@ def extract_boxes(path='../coco/'):  # from utils.datasets import *; extract_box
     for im_file in tqdm(files, total=n):
         if im_file.suffix[1:] in img_formats:
             # image
-            im = cv2.imread(str(im_file))[..., ::-1]  # BGR to RGB
+            im = cv2.imread(str(im_file), cv2.IMREAD_UNCHANGED)
+            if im.ndim == 2:
+                im = im[..., np.newaxis]
+            else:
+                im = im[..., ::-1]  # BGR to RGB
             h, w = im.shape[:2]
 
             # labels
