@@ -151,7 +151,7 @@ def plot_images(images, targets, paths=None, fname='images.jpg', names=None, max
         if img.ndim == 3 and img.shape[2] == 3:
             mosaic[block_y:block_y + h, block_x:block_x + w, :] = img
         else:
-            mosaic[block_y:block_y + h, block_x:block_x + w] = img
+            mosaic[block_y:block_y + h, block_x:block_x + w] = cv2.cvtColor(img, cv2.COLOR_GRAY2RGB)
         if len(targets) > 0:
             image_targets = targets[targets[:, 0] == i]
             boxes = xywh2xyxy(image_targets[:, 2:6]).T
