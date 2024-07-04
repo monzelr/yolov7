@@ -205,7 +205,10 @@ def plot_images(images, targets, paths=None, fname='images.jpg', names=None, max
             break
         x, y = int(w * (i // ns)), int(h * (i % ns))  # block origin
         im = im.transpose(1, 2, 0)
-        mosaic[y:y + h, x:x + w, :] = im
+        if im.ndim == 2:
+            mosaic[y:y + h, x:x + w] = cv2.cvtColor(im, cv2.COLOR_GRAY2RGB)
+        else:
+            mosaic[y:y + h, x:x + w, :] = im
 
     # Resize (optional)
     scale = max_size / ns / max(h, w)
